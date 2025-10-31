@@ -30,6 +30,46 @@ This application leverages WebRTC technology to create secure, direct connection
 3. **File Transfer**: Files are transferred directly between peers through the secure WebRTC data channel
 4. **Acknowledgment**: WebSocket ensures reliable acknowledgment of connection status and transfer initiation
 
+### Connection Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant Sender as Sender (Peer A)
+    participant Server as Node.js Server<br/>(WebSocket + PostgreSQL)
+    participant Receiver as Receiver (Peer B)
+    
+    Note over Sender,Receiver: Phase 1: Initial Connection & Handshake
+    Sender->>Server: Connect via WebSocket
+    Server->>Server: Store session in PostgreSQL
+    Receiver->>Server: Connect via WebSocket
+    Server->>Server: Store session in PostgreSQL
+    
+    Note over Sender,Receiver: Phase 2: Signaling & Peer Discovery
+    Sender->>Server: Send Offer (SDP)
+    Server->>Receiver: Forward Offer
+    Receiver->>Server: Send Answer (SDP)
+    Server->>Sender: Forward Answer
+    
+    Note over Sender,Receiver: Phase 3: ICE Candidate Exchange
+    Sender->>Server: Send ICE Candidates
+    Server->>Receiver: Forward ICE Candidates
+    Receiver->>Server: Send ICE Candidates
+    Server->>Sender: Forward ICE Candidates
+    
+    Note over Sender,Receiver: Phase 4: P2P Connection Established
+    Sender-->>Receiver: WebRTC Direct Connection (P2P)
+    Sender->>Receiver: Acknowledgment
+    
+    Note over Sender,Receiver: Phase 5: File Transfer
+    Sender->>Receiver: File Metadata (name, size, type)
+    Receiver->>Sender: Ready to Receive
+    Sender->>Receiver: File Data Chunks (via WebRTC Data Channel)
+    Receiver->>Sender: Transfer Progress Updates
+    Receiver->>Sender: Transfer Complete Acknowledgment
+    
+    Note over Sender,Receiver: Connection remains open for additional transfers
+```
+
 ## 🏗️ Architecture
 
 The application uses a hybrid architecture:
